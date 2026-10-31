@@ -1,6 +1,6 @@
 # o-fleet: agent guide
 
-`o-fleet` (so `o fleet`) registers a user's machines and runs read-only checks across them over ssh. Usage is in README.md. It is an [ochazuke](https://github.com/unixsuperhero/ochazuke) application with an [oden](https://github.com/unixsuperhero/oden) command line: read ochazuke's AGENTS.md ("Building an application on ochazuke" and the Invariants) before changing the app, page or verbs.
+`o-fleet` (so `o fleet`) registers a user's machines and runs read-only checks across them over ssh. Usage is in README.md. It is an [ochazuke](https://github.com/ofamtools/ochazuke) application with an [oden](https://github.com/ofamtools/oden) command line: read ochazuke's AGENTS.md ("Building an application on ochazuke" and the Invariants) before changing the app, page or verbs.
 
 ## Nothing personal
 

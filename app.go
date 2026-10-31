@@ -5,8 +5,8 @@ import (
 	"io"
 	"os"
 
-	"github.com/unixsuperhero/ochazuke"
-	ocli "github.com/unixsuperhero/ochazuke/cli"
+	"ofam.dev/ochazuke"
+	ocli "ofam.dev/ochazuke/cli"
 )
 
 // The application: one ochazuke runtime holding the machine, mount, check

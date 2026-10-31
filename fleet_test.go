@@ -12,7 +12,7 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/unixsuperhero/ochazuke"
+	"ofam.dev/ochazuke"
 )
 
 // Tests run against a temp registry and checks file, a fake runner (no
