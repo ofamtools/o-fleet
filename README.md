@@ -1,6 +1,29 @@
-# o-fleet
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="assets/logo-dark.svg">
+    <img alt="o-fleet" src="assets/logo-light.svg" width="360">
+  </picture>
+  <br>
+  <a href="https://github.com/ofamtools/o-fleet/tags"><img alt="Latest tag" src="https://img.shields.io/github/v/tag/ofamtools/o-fleet"></a>
+  <a href="https://pkg.go.dev/ofam.dev/o-fleet"><img alt="Go Reference" src="https://pkg.go.dev/badge/ofam.dev/o-fleet.svg"></a>
+  <a href="go.mod"><img alt="Go version" src="https://img.shields.io/github/go-mod/go-version/ofamtools/o-fleet"></a>
+  <a href="LICENSE"><img alt="License" src="https://img.shields.io/github/license/ofamtools/o-fleet"></a>
+</p>
+
+<p align="center">A registry of your machines and read-only checks across them, in parallel, over ssh.</p>
 
 `o-fleet` (so `o fleet`) keeps a registry of your machines (the fleet) and runs read-only checks across them, in parallel, over ssh. Machines are reached by their `~/.ssh/config` alias (which can point at a Tailscale address) or their tailnet name; the machine you are on can be `--local`. Nothing about any particular fleet is built in: the registry starts empty and every machine, name, user and tailnet domain comes from your own files.
+
+## Install
+
+Install with the Go version in [go.mod](go.mod) or newer:
+
+```sh
+go install ofam.dev/o-fleet@latest
+mtm extension register fleet   # optional: the Fleet page as an mtm tab
+```
+
+## Usage
 
 ```sh
 o-fleet machine discover                 # the tailnet's machines, registered or new (dry run)
@@ -13,6 +36,7 @@ o-fleet df --json                        # every machine, JSON rows
 o-fleet status                           # up, uptime, load, memory, main disk, every machine at once
 o-fleet ping                             # tailscale ping (or --via ssh)
 o-fleet ssh backup                       # a shell on backup (o-fleet machine ssh backup prints the command)
+o-fleet ssh backup uptime                # or one command on it
 o-fleet check run uname backup,web       # any check on any machines
 o-fleet                                  # the Fleet page (TUI)
 ```
@@ -55,4 +79,6 @@ Ship only reads: o-fleet runs whatever a row says, so a row that changes a machi
 
 ```sh
 GOWORK=off GOFLAGS=-trimpath go build -o o-fleet .
+gofmt -l . && GOWORK=off go vet ./... && GOWORK=off go test ./...
+GOWORK=off go run . tui --smoke --no-status
 ```
