@@ -28,7 +28,7 @@ func (a *App) registerVerbs() {
 		Verb("show", a.machineShow, "one machine: {machine, via, ssh}").Fetch().Quiet().Positional("name").
 		Verb("add", a.machineAdd, "register a machine: NAME and how to reach it (--ssh ALIAS, --tailscale HOST, --ip, --user, --local) plus --os, --disk, --tags, --notes").Positional("name").
 		Verb("set", a.machineSet, "change a machine's fields (the flags of add; an empty value clears one)").Positional("name").
-		Verb("remove", a.machineRemove, "forget a machine (the registry only; nothing remote changes)").Confirm("Remove machine {{name}}?").Positional("name").
+		Verb("remove", a.machineRemove, "forget a machine (the registry only; nothing remote changes)").Destructive().Confirm("Remove machine {{name}}?").Positional("name").
 		Verb("rename", a.machineRename, "rename a machine").Positional("name", "to").
 		Verb("discover", a.machineDiscover, "the tailnet's machines (tailscale status --json), each marked registered or new with its ~/.ssh/config alias; --apply registers the new ones (--only NAMES picks them)").Rows("peer").
 		Verb("ping", a.machinePing, "reach each machine: tailscale ping when it has a tailnet name, else ssh true (--via ssh|tailscale), with a timeout: rows {machine, via, ok, ms, detail, error}").Fetch().Quiet().Positional("machines").
