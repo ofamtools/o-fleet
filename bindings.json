@@ -2,7 +2,7 @@
 {
   "bindings": [
     {"context": "fleet/normal", "bindings": {
-      "R": {"action": "machine.status", "hint": "status all"},
+      "R": {"action": "machine.status", "args": {"machines": "*"}, "hint": "status all"},
       "q": {"action": "app.quit", "hint": "quit"}
     }},
     {"context": "machine/normal", "bindings": {

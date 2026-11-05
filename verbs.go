@@ -44,7 +44,7 @@ func (a *App) registerVerbs() {
 	setHistory(r, ochazuke.HistoryChange, "machine.add", "machine.set", "machine.remove", "machine.rename", "machine.discover")
 
 	name := ochazuke.Parameter{Type: "string", Description: "a machine name", Noun: "machine"}
-	machines := ochazuke.Parameter{Type: "string", Description: "machine names, comma-separated (default: every machine)"}
+	machines := ochazuke.Parameter{Type: "string", Description: "machine names, comma-separated, or * for every machine (default: every machine)"}
 	check := ochazuke.Parameter{Type: "string", Description: "a check name (check list prints them)", Noun: "check"}
 	str := func(d string) ochazuke.Parameter { return ochazuke.Parameter{Type: "string", Description: d} }
 	boolean := func(d string) ochazuke.Parameter { return ochazuke.Parameter{Type: "boolean", Description: d} }
@@ -133,6 +133,10 @@ func (a *App) machinesArg(c ochazuke.Ctx) ([]Machine, error) {
 	}
 	var names []string
 	for _, n := range splitList(ochazuke.StringArg(c.Args, "machines", "")) {
+		if n == "*" {
+			names = nil
+			break
+		}
 		names = append(names, machineName(n))
 	}
 	ms, err := f.pick(names)
