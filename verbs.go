@@ -43,8 +43,11 @@ func (a *App) registerVerbs() {
 		Verb("run", a.runChecks, "run CHECK on MACHINES (default every machine): results {machine, check, ok, error, value, ms}").Fetch().Quiet().Positional("check", "machines")
 	setHistory(r, ochazuke.HistoryChange, "machine.add", "machine.set", "machine.remove", "machine.rename", "machine.discover")
 
-	name := ochazuke.Parameter{Type: "string", Description: "a machine name", Noun: "machine"}
-	machines := ochazuke.Parameter{Type: "string", Description: "machine names, comma-separated, or * for every machine (default: every machine)"}
+	// name and machines mean "the focused machine" when a key, the help or the
+	// palette runs the verb (Parameter.From); the command line has no row and
+	// still defaults machines to every machine, or "*" spells that out.
+	name := ochazuke.Parameter{Type: "string", Description: "a machine name", Noun: "machine", From: "row:name"}
+	machines := ochazuke.Parameter{Type: "string", Description: "machine names, comma-separated, or * for every machine (default: every machine; from a key or the palette, the focused machine)", From: "row:name"}
 	check := ochazuke.Parameter{Type: "string", Description: "a check name (check list prints them)", Noun: "check"}
 	str := func(d string) ochazuke.Parameter { return ochazuke.Parameter{Type: "string", Description: d} }
 	boolean := func(d string) ochazuke.Parameter { return ochazuke.Parameter{Type: "boolean", Description: d} }

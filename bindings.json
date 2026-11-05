@@ -6,10 +6,10 @@
       "q": {"action": "app.quit", "hint": "quit"}
     }},
     {"context": "machine/normal", "bindings": {
-      "enter": {"action": "machine.df", "from": {"machines": "row:name"}, "hint": "df"},
-      "s": {"action": "machine.status", "from": {"machines": "row:name"}, "hint": "status"},
-      "p": {"action": "machine.ping", "from": {"machines": "row:name"}, "hint": "ping"},
-      "d d": {"action": "machine.remove", "from": {"name": "row:name"}, "hint": "forget"}
+      "enter": {"action": "machine.df", "hint": "df"},
+      "s": {"action": "machine.status", "hint": "status"},
+      "p": {"action": "machine.ping", "hint": "ping"},
+      "d d": {"action": "machine.remove", "hint": "forget"}
     }}
   ]
 }

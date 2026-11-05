@@ -28,7 +28,7 @@ o-fleet ships no knowledge of any one fleet. Machine names, users, tailnet domai
 - Read-only on machines. Shipped checks only read. Tests never reach a machine: they use `fakeRunner`, a fake tailscale script and a temp ssh config, with `O_FLEET_*` pointing into `t.TempDir()`.
 - A check is a data row (script + parser name), never a code branch. A new parser is a new generic entry in `parsers`, never one for a single check.
 - Remote verbs are `Pending` (off the loop), ask every machine at once, each under its check's timeout; an unreachable machine is a row with an error, not a failed command.
-- Keys live in `bindings.json` only; a key that means the focused machine passes `"from": {"machines": "row:name"}`.
+- Keys live in `bindings.json` only; a verb that means the focused machine declares `From: "row:name"` on its parameter (`name`, `machines`), so keys, the help and the palette fill it alike; a binding that wants every machine passes `"args": {"machines": "*"}`.
 - Every verb declares its history kind.
 
 ## Checks

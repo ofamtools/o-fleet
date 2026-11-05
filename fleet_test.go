@@ -512,3 +512,44 @@ func TestEveryVerbDeclaresItsHistory(t *testing.T) {
 		t.Fatal("catalog lacks machine")
 	}
 }
+
+// The parameters declare the focused machine, so the palette, the help and a
+// request that names a row fill machines and name without a binding's from.
+func TestParameterSourcesFillFromTheRow(t *testing.T) {
+	isolate(t)
+	register(t)
+	for _, p := range []struct{ op, arg string }{{"machine.df", "machines"}, {"machine.status", "machines"}, {"machine.ping", "machines"}, {"machine.remove", "name"}, {"machine.show", "name"}} {
+		if got := opsOf(t).Operations[p.op].Parameters[p.arg].From; got != "row:name" {
+			t.Errorf("%s %s: From %q", p.op, p.arg, got)
+		}
+	}
+	a, _ := New()
+	f := fake()
+	a.run = f
+	a.tui = true
+	if _, err := a.r.Execute(ochazuke.Request{Noun: "machine", Verb: "list", Target: machinesID}); err != nil {
+		t.Fatal(err)
+	}
+	if err := a.Settle(); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := a.r.Dispatch(ochazuke.MacroKey{Key: "j"}); err != nil {
+		t.Fatal(err)
+	}
+	if err := a.r.RunUnbound(a.r.BaseFocus(), ochazuke.Request{Noun: "machine", Verb: "status"}); err != nil {
+		t.Fatal(err)
+	}
+	_ = a.Settle()
+	if _, ok := a.status["desk"]; !ok || len(a.status) != 1 {
+		t.Fatalf("%v", a.status)
+	}
+}
+
+func opsOf(t *testing.T) *ochazuke.Runtime {
+	t.Helper()
+	a, err := New()
+	if err != nil {
+		t.Fatal(err)
+	}
+	return a.r
+}
