@@ -1,0 +1,9 @@
+# namecheck baseline: file, function, kind, literal, count, reason (tab separated).
+# A row with a reason is a legitimate use that stays. A row without one is debt that may only shrink:
+# NAMECHECK_UPDATE=1 removes rows and lowers counts, never adds them. Adding a row is a reviewed edit.
+checks.go	var parsers	table	"df"	1
+checks.go	var parsers	table	"lines"	1
+checks.go	var parsers	table	"text"	1
+tailnet.go	readSSHConfig	case	"user"	1	ssh_config keyword User
+verbs.go	App.machineDiscover	cyclo	"-"	27
+verbs.go	App.machinePing	compare	"tailscale"	1
