@@ -3,7 +3,7 @@
 // Read-only on the machines: a check is a row of sh script and a parser,
 // and o-fleet ships only reads.
 //
-//	o-fleet machine list|show|add|set|remove|rename|discover|ping|ssh|df|status|check|state
+//	o-fleet machine list|show|get|add|create|set|edit|remove|delete|discover|ping|ssh|df|status|check|state
 //	o-fleet check list|show|run
 //	o-fleet df [MACHINE...] [--all] [--json]       (machine df, as a table)
 //	o-fleet status [MACHINE...] [--json]           (machine status, as a table)

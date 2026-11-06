@@ -46,7 +46,7 @@ The machine names above are examples; use your own.
 
 ## Nouns and verbs
 
-- `machine`: `list`, `show`, `add`, `set`, `remove` (confirm), `rename`, `discover`, `ping`, `ssh`, `df`, `status`, `check CHECK [MACHINES]`, `state`.
+- `machine`: `list`, `show`, `add` (create), `set` (the standard set: `machine set NAME disk=/ notes="..."`; `name=NEW` or `@label=NEW` renames; the ssh field is `destination`), `remove` (confirm; delete), `get`, `edit`, `discover`, `ping`, `ssh`, `df`, `status`, `check CHECK [MACHINES]`, `state`.
 - `check`: `list`, `show` (prints the script it sends), `run CHECK [MACHINES]` (the same handler as `machine check`).
 - `df`, `status`, `ping` at the top level are the machine verbs printed as tables: bare words are machine names; `--json` or `--format markdown|toon` picks another output.
 
@@ -54,7 +54,7 @@ Every `NOUN VERB` prints JSON by default and takes `--format table|markdown|toon
 
 ## Files
 
-- `~/.config/o-fleet/machines.json` (`$O_FLEET_MACHINES`): `{"machines": [{name, tailscale, ip, ssh, user, local, os, disk, tags, notes}]}`. Only `add`, `set`, `remove`, `rename` and `discover --apply` write it. `disk` is the mount `status` reports (default: the largest one df shows).
+- `~/.config/o-fleet/machines.json` (`$O_FLEET_MACHINES`): `{"machines": [{name, tailscale, ip, ssh, user, local, os, disk, tags, notes}]}`. Only `add`/`create`, `set`, `remove`/`delete` and `discover --apply` write it. `disk` is the mount `status` reports (default: the largest one df shows).
 - `~/.config/o-fleet/checks.json` (`$O_FLEET_CHECKS`): more checks, same format as the embedded [checks.json](checks.json); a row named like a default replaces it.
 - `~/.config/o-fleet/bindings.json` etc.: the usual ochazuke user files (keys, settings, actions).
 
@@ -68,7 +68,7 @@ A check is a row: `name`, a POSIX sh `script` (or `scripts` keyed by a `uname -s
 
 To change a default, copy its row from `o fleet check show NAME` (or [checks.json](checks.json)) into your file and edit it. For example, to hide a mount of your own from `df` and `status`, give your `df` row the default `hide` lists plus your pattern under `mount` (say `"/mnt/scratch*"`). `o fleet check list` shows each row's `source`.
 
-To pin the mount `status` reports for one machine rather than the largest: `o fleet machine set backup --disk /srv`.
+To pin the mount `status` reports for one machine rather than the largest: `o fleet machine set backup disk=/srv`.
 
 Ship only reads: o-fleet runs whatever a row says, so a row that changes a machine is the author's choice.
 

@@ -67,6 +67,8 @@ func New() (*App, error) {
 	for noun, cols := range columns {
 		r.Define(noun).Columns(cols...)
 	}
+	r.Define("machine").Props(machineProps()...).Store(a.machineStore())
+	r.Define("check").Props(checkProps()...).Store(a.checkStore())
 	a.registerVerbs()
 	a.m = ochazuke.NewModel(r)
 	a.m.Title = "o-fleet"

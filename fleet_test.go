@@ -146,8 +146,8 @@ func TestRegistryVerbs(t *testing.T) {
 	if d := rows[2].Data.Destination(); d != "me@laptop.node.example" {
 		t.Fatalf("destination %q", d)
 	}
-	run(t, "machine", "rename", "laptop", "work")
-	run(t, "machine", "set", "work", "--notes", "the work laptop", "--disk", "/")
+	run(t, "machine", "set", "laptop", "@label=work") // the old rename
+	run(t, "machine", "set", "work", "notes=the work laptop", "disk=/")
 	show := decode[map[string]any](t, run(t, "machine", "show", "work"))
 	if m := show["machine"].(map[string]any); m["notes"] != "the work laptop" || m["disk"] != "/" {
 		t.Fatalf("%v", show)
@@ -267,7 +267,7 @@ func TestStatus(t *testing.T) {
 		t.Fatalf("%+v", st)
 	}
 	// A machine's Disk picks the mount status reports.
-	run(t, "machine", "set", "backup", "--disk", "/")
+	run(t, "machine", "set", "backup", "disk=/")
 	js, _, _ = runFake(t, fake(), "machine", "status", "--machines", "backup")
 	if d := decode[[]row](t, js)[0].Data.Status.Disk; d.Mount != "/" {
 		t.Fatalf("%+v", d)
@@ -502,8 +502,10 @@ func TestEveryVerbDeclaresItsHistory(t *testing.T) {
 			t.Errorf("%s declares no history kind", key)
 		}
 	}
-	if n != 16 {
-		t.Fatalf("%d o-fleet verbs, want 16", n)
+	// The named verbs plus the standard verbs the machine and check
+	// stores add.
+	if n != 28 {
+		t.Fatalf("%d o-fleet verbs, want 28", n)
 	}
 	if _, err := New(); err != nil {
 		t.Fatal(err)

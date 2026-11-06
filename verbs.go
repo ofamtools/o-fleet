@@ -27,9 +27,7 @@ func (a *App) registerVerbs() {
 		Verb("list", a.machineList, "the registered machines with their last status: rows {noun, id: machine/NAME, label, data: {name, tailscale, ip, ssh, user, local, os, disk, tags, notes, status}, cells}").Rows("machine").Fetch().Quiet().
 		Verb("show", a.machineShow, "one machine: {machine, via, ssh}").Fetch().Quiet().Positional("name").
 		Verb("add", a.machineAdd, "register a machine: NAME and how to reach it (--ssh ALIAS, --tailscale HOST, --ip, --user, --local) plus --os, --disk, --tags, --notes").Positional("name").
-		Verb("set", a.machineSet, "change a machine's fields (the flags of add; an empty value clears one)").Positional("name").
 		Verb("remove", a.machineRemove, "forget a machine (the registry only; nothing remote changes)").Destructive().Confirm("Remove machine {{name}}?").Positional("name").
-		Verb("rename", a.machineRename, "rename a machine").Positional("name", "to").
 		Verb("discover", a.machineDiscover, "the tailnet's machines (tailscale status --json), each marked registered or new with its ~/.ssh/config alias; --apply registers the new ones (--only NAMES picks them)").Rows("peer").
 		Verb("ping", a.machinePing, "reach each machine: tailscale ping when it has a tailnet name, else ssh true (--via ssh|tailscale), with a timeout: rows {machine, via, ok, ms, detail, error}").Fetch().Quiet().Positional("machines").
 		Verb("ssh", a.machineSSH, "the ssh command line for a machine, {machine, argv, command} (o-fleet ssh NAME runs it)").Fetch().Quiet().Positional("name").
@@ -41,7 +39,7 @@ func (a *App) registerVerbs() {
 		Verb("list", a.checkList, "the checks: the embedded defaults with the user's checks.json over them: rows {noun, id: check/NAME, data: {name, description, script, scripts, parser, hide, dedupe, sort, timeout, source}, cells}").Rows("check").Fetch().Quiet().
 		Verb("show", a.checkShow, "one check row and the script it sends: {check, script}").Fetch().Quiet().Positional("check").
 		Verb("run", a.runChecks, "run CHECK on MACHINES (default every machine): results {machine, check, ok, error, value, ms}").Fetch().Quiet().Positional("check", "machines")
-	setHistory(r, ochazuke.HistoryChange, "machine.add", "machine.set", "machine.remove", "machine.rename", "machine.discover")
+	setHistory(r, ochazuke.HistoryChange, "machine.add", "machine.remove", "machine.discover")
 
 	// name and machines mean "the focused machine" when a key, the help or the
 	// palette runs the verb (Parameter.From); the command line has no row and
@@ -78,9 +76,7 @@ func (a *App) registerVerbs() {
 	set("machine.list", "row[]", nil)
 	set("machine.show", "{machine, via, ssh}", map[string]ochazuke.Parameter{"name": name})
 	set("machine.add", "machine", fields(map[string]ochazuke.Parameter{"name": required(str("the new machine's name"))}))
-	set("machine.set", "machine", fields(map[string]ochazuke.Parameter{"name": name}))
 	set("machine.remove", "{removed}", map[string]ochazuke.Parameter{"name": name})
-	set("machine.rename", "{from, to}", map[string]ochazuke.Parameter{"name": name, "to": required(str("the new name"))})
 	set("machine.discover", "row[]", map[string]ochazuke.Parameter{
 		"apply": boolean("register the new peers (default: a dry run that writes nothing)"),
 		"only":  str("with --apply, only these peer names, comma-separated"),
@@ -217,20 +213,30 @@ func applyFields(m *Machine, args ochazuke.Arguments) {
 }
 
 func (a *App) change(fn func(f *Fleet) (any, error)) ochazuke.Result {
-	f, err := loadFleet()
+	out, err := a.mutate(fn)
 	if err != nil {
 		return ochazuke.Failed(err)
+	}
+	return ochazuke.Done(out)
+}
+
+// mutate reads the registry, applies fn, writes it back and refreshes the
+// machine list: the one write path of the named verbs and the store.
+func (a *App) mutate(fn func(f *Fleet) (any, error)) (any, error) {
+	f, err := loadFleet()
+	if err != nil {
+		return nil, err
 	}
 	out, err := fn(&f)
 	if err != nil {
-		return ochazuke.Failed(err)
+		return nil, err
 	}
 	if err := f.save(); err != nil {
-		return ochazuke.Failed(err)
+		return nil, err
 	}
 	a.fleet = f
 	_ = a.machines.SetItems(itemsOf(a.machineRows(f)))
-	return ochazuke.Done(out)
+	return out, nil
 }
 
 func (a *App) machineAdd(c ochazuke.Ctx) ochazuke.Result {
@@ -238,22 +244,6 @@ func (a *App) machineAdd(c ochazuke.Ctx) ochazuke.Result {
 		m := Machine{Name: machineName(ochazuke.StringArg(c.Args, "name", ""))}
 		applyFields(&m, c.Args)
 		return m, f.add(m)
-	})
-}
-
-func (a *App) machineSet(c ochazuke.Ctx) ochazuke.Result {
-	n, err := nameArg(c)
-	if err != nil {
-		return ochazuke.Failed(err)
-	}
-	return a.change(func(f *Fleet) (any, error) {
-		i := f.index(n)
-		if i < 0 {
-			_, err := f.find(n)
-			return nil, err
-		}
-		applyFields(&f.Machines[i], c.Args)
-		return f.Machines[i], nil
 	})
 }
 
@@ -266,25 +256,6 @@ func (a *App) machineRemove(c ochazuke.Ctx) ochazuke.Result {
 		m, err := f.remove(n)
 		delete(a.status, n)
 		return map[string]any{"removed": m}, err
-	})
-}
-
-func (a *App) machineRename(c ochazuke.Ctx) ochazuke.Result {
-	n, err := nameArg(c)
-	if err != nil {
-		return ochazuke.Failed(err)
-	}
-	to := machineName(ochazuke.StringArg(c.Args, "to", ""))
-	return a.change(func(f *Fleet) (any, error) {
-		if err := f.rename(n, to); err != nil {
-			return nil, err
-		}
-		if st, ok := a.status[n]; ok {
-			delete(a.status, n)
-			st.Machine = to
-			a.status[to] = st
-		}
-		return map[string]string{"from": n, "to": to}, nil
 	})
 }
 

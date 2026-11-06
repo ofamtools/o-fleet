@@ -40,6 +40,8 @@ var columns = map[string][]ochazuke.Column{
 // machineRow is a machine row's data: the registry fields, then the last
 // status read, when there is one.
 type machineRow struct {
+	// ID is the machine store's key prop (the name).
+	ID string `json:"id"`
 	Machine
 	Status *Status `json:"status,omitempty"`
 }
@@ -61,7 +63,7 @@ func machineItem(m Machine, st *Status) ochazuke.ListItem {
 			cells[6] = strings.ToLower(st.OS)
 		}
 	}
-	return ochazuke.ListItem{ID: machineID(m.Name), Label: m.Name, Noun: "machine", Data: machineRow{Machine: m, Status: st}, Cells: cells}
+	return ochazuke.ListItem{ID: machineID(m.Name), Label: m.Name, Noun: "machine", Data: machineRow{ID: m.Name, Machine: m, Status: st}, Cells: cells}
 }
 
 // diskCell is a mount as "200G free 99%".
