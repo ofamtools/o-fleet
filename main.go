@@ -94,7 +94,7 @@ Files:
 // the verb's parameter is a boolean (or it is --yes, or a bare --json),
 // as the shell reads them.
 func (s shortcut) args(r *ochazuke.Runtime, in []string) []string {
-	op := r.Operations[r.CanonicalKey(s.noun+"."+s.verb)]
+	op := r.Operations.At(ochazuke.Key(r.CanonicalKey(s.noun + "." + s.verb)))
 	var words, flags []string
 	format := false // --json alone or --format: the caller picked the output
 	for i := 0; i < len(in); i++ {

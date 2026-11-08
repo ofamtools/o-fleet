@@ -48,6 +48,16 @@ type App struct {
 	Stdout, Stderr io.Writer
 }
 
+// Namespace is the singular namespace o-fleet declares (lexicon plan): its
+// operations are fleet.<noun>.<verb> and a host mounts its catalog under it.
+const Namespace = "fleet"
+
+func init() {
+	if err := ochazuke.DeclareNamespace(Namespace); err != nil {
+		panic(err)
+	}
+}
+
 // New builds the runtime: the Fleet page holding the machine list and the
 // focused machine's mounts, the nouns with their columns, verbs and the
 // default key rows (bindings.json), and the model.

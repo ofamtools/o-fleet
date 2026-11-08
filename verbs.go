@@ -68,9 +68,9 @@ func (a *App) registerVerbs() {
 	}
 	all := boolean("keep the mounts and rows the check hides (pseudo filesystems, system volumes, duplicates)")
 	set := func(key, result string, params map[string]ochazuke.Parameter) {
-		op := r.Operations[r.CanonicalKey(key)]
+		op := r.Operations.At(ochazuke.Key(r.CanonicalKey(key)))
 		op.Parameters, op.Result = params, result
-		r.Operations[r.CanonicalKey(key)] = op
+		r.Operations.Set(op)
 	}
 	required := func(p ochazuke.Parameter) ochazuke.Parameter { p.Required = true; return p }
 	set("machine.list", "row[]", nil)
@@ -520,11 +520,11 @@ func parallel(n int, fn func(int)) {
 // setHistory declares the history kind of each named verb.
 func setHistory(r *ochazuke.Runtime, kind string, keys ...string) {
 	for _, key := range keys {
-		op, ok := r.Operations[r.CanonicalKey(key)]
+		op, ok := r.Operations.Find(ochazuke.Key(r.CanonicalKey(key)))
 		if !ok {
 			panic("setHistory: no operation " + key)
 		}
 		op.HistoryKind = kind
-		r.Operations[r.CanonicalKey(key)] = op
+		r.Operations.Set(op)
 	}
 }

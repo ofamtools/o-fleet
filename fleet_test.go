@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	ocli "ofam.dev/ochazuke/cli"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -493,8 +494,8 @@ func TestEveryVerbDeclaresItsHistory(t *testing.T) {
 	ochazuke.NewModel(r)
 	a, _ := New()
 	n := 0
-	for key, op := range a.r.Operations {
-		if _, framework := r.Operations[key]; framework || op.Noun == "fleet" {
+	for key, op := range a.r.Operations.Entries() {
+		if _, framework := r.Operations.Find(ochazuke.Key(key)); framework || op.Noun() == "fleet" {
 			continue
 		}
 		n++
@@ -521,7 +522,7 @@ func TestParameterSourcesFillFromTheRow(t *testing.T) {
 	isolate(t)
 	register(t)
 	for _, p := range []struct{ op, arg string }{{"machine.df", "machines"}, {"machine.status", "machines"}, {"machine.ping", "machines"}, {"machine.remove", "name"}, {"machine.show", "name"}} {
-		if got := opsOf(t).Operations[p.op].Parameters[p.arg].From; got != "row:name" {
+		if got := opsOf(t).Operations.At(ochazuke.Key(p.op)).Parameters[p.arg].From; got != "row:name" {
 			t.Errorf("%s %s: From %q", p.op, p.arg, got)
 		}
 	}
@@ -554,4 +555,17 @@ func opsOf(t *testing.T) *ochazuke.Runtime {
 		t.Fatal(err)
 	}
 	return a.r
+}
+
+func TestCatalogDeclaresSingularNamespace(t *testing.T) {
+	var doc ocli.CatalogDoc
+	if err := json.Unmarshal([]byte(run(t, "catalog")), &doc); err != nil {
+		t.Fatal(err)
+	}
+	if doc.Namespace != "fleet" || ochazuke.DefaultNamespace != "fleet" {
+		t.Fatalf("catalog namespace %q, default %q; want fleet", doc.Namespace, ochazuke.DefaultNamespace)
+	}
+	if got, err := ocli.CatalogNamespace(doc, "o-fleet"); err != nil || got != "fleet" {
+		t.Fatal(got, err)
+	}
 }

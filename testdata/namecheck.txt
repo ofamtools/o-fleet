@@ -4,6 +4,7 @@
 checks.go	var parsers	table	"df"	1
 checks.go	var parsers	table	"lines"	1
 checks.go	var parsers	table	"text"	1
+tailnet.go	readSSHConfig	case	"match"	1	ssh_config keyword Match
 tailnet.go	readSSHConfig	case	"user"	1	ssh_config keyword User
 verbs.go	App.machineDiscover	cyclo	"-"	27
 verbs.go	App.machinePing	compare	"tailscale"	1
