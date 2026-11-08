@@ -285,18 +285,18 @@ func TestChecksAreConfig(t *testing.T) {
 	if err := os.WriteFile(filepath.Join(dir, "checks.json"), []byte(user), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	list := run(t, "check", "list", "--format", "table")
+	list := run(t, "probe", "list", "--format", "table")
 	if !strings.Contains(list, "who ") || !strings.Contains(list, "~") && !strings.Contains(list, dir) {
 		t.Fatalf("%s", list)
 	}
-	show := decode[map[string]any](t, run(t, "check", "show", "uname"))
+	show := decode[map[string]any](t, run(t, "probe", "show", "uname"))
 	script := show["script"].(string)
 	if !strings.Contains(script, "case \"$(uname -s)\" in\nLinux)\nuname -sr\n;;\n*)\nuname -s\n;;\nesac") {
 		t.Fatalf("%q", script)
 	}
 	f := fake()
 	f.answers["backup"]["whoami"] = "me\n"
-	for _, args := range [][]string{{"check", "run", "who", "backup"}, {"machine", "check", "who", "backup"}} {
+	for _, args := range [][]string{{"probe", "run", "who", "backup"}, {"machine", "run", "who", "backup"}} {
 		out, _, err := runFake(t, f, args...)
 		if err != nil {
 			t.Fatal(err)
@@ -308,7 +308,7 @@ func TestChecksAreConfig(t *testing.T) {
 	}
 	bad := `{"checks": [{"name": "x", "script": "true", "parser": "nope"}]}`
 	os.WriteFile(filepath.Join(dir, "checks.json"), []byte(bad), 0o644)
-	if _, _, err := runFake(t, f, "check", "list"); err == nil || !strings.Contains(err.Error(), "parser") {
+	if _, _, err := runFake(t, f, "probe", "list"); err == nil || !strings.Contains(err.Error(), "parser") {
 		t.Fatalf("%v", err)
 	}
 }

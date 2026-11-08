@@ -33,10 +33,10 @@ func (a *App) registerVerbs() {
 		Verb("ssh", a.machineSSH, "the ssh command line for a machine, {machine, argv, command} (o-fleet ssh NAME runs it)").Fetch().Quiet().Positional("name").
 		Verb("df", a.machineDF, "disk space per mount on each machine (the df check): rows {noun: mount, data: {machine, mount, filesystem, size, used, avail, use_pct, error}, cells}; --all keeps pseudo and system mounts").Rows("mount").Fetch().Quiet().Positional("machines").
 		Verb("status", a.machineStatus, "up, uptime, load, memory and the main disk of each machine (the status and df checks, in parallel): machine rows with data.status").Rows("machine").Fetch().Quiet().Positional("machines").
-		Verb("check", a.runChecks, "run a check on machines: results {machine, check, ok, error, value, ms} (the same as check run CHECK MACHINES)").Fetch().Quiet().Positional("check", "machines").
-		Verb("state", a.machineState, "every machine row, JSON Lines {noun, id, label, data, cells}, from the registry (no remote call; the catalog's state)").State().Fetch().Quiet()
-	r.Define("check").
-		Verb("list", a.checkList, "the checks: the embedded defaults with the user's checks.json over them: rows {noun, id: check/NAME, data: {name, description, script, scripts, parser, hide, dedupe, sort, timeout, source}, cells}").Rows("check").Fetch().Quiet().
+		Verb("run", a.runChecks, "run a check on machines: results {machine, check, ok, error, value, ms} (the same as probe run CHECK MACHINES, from the machine side)").Fetch().Quiet().Positional("check", "machines").
+		Verb("lists", a.machineState, "every machine row, JSON Lines {noun, id, label, data, cells}, from the registry (no remote call; the catalog's state)").Lists().Fetch().Quiet()
+	r.Define("probe").
+		Verb("list", a.checkList, "the checks: the embedded defaults with the user's checks.json over them: rows {noun, id: probe/NAME, data: {name, description, script, scripts, parser, hide, dedupe, sort, timeout, source}, cells}").Rows("probe").Fetch().Quiet().
 		Verb("show", a.checkShow, "one check row and the script it sends: {check, script}").Fetch().Quiet().Positional("check").
 		Verb("run", a.runChecks, "run CHECK on MACHINES (default every machine): results {machine, check, ok, error, value, ms}").Fetch().Quiet().Positional("check", "machines")
 	setHistory(r, ochazuke.HistoryChange, "machine.add", "machine.remove", "machine.discover")
@@ -46,7 +46,7 @@ func (a *App) registerVerbs() {
 	// still defaults machines to every machine, or "*" spells that out.
 	name := ochazuke.Parameter{Type: "string", Description: "a machine name", Noun: "machine", From: "row:name"}
 	machines := ochazuke.Parameter{Type: "string", Description: "machine names, comma-separated, or * for every machine (default: every machine; from a key or the palette, the focused machine)", From: "row:name"}
-	check := ochazuke.Parameter{Type: "string", Description: "a check name (check list prints them)", Noun: "check"}
+	check := ochazuke.Parameter{Type: "string", Description: "a check name (probe list prints them)", Noun: "probe"}
 	str := func(d string) ochazuke.Parameter { return ochazuke.Parameter{Type: "string", Description: d} }
 	boolean := func(d string) ochazuke.Parameter { return ochazuke.Parameter{Type: "boolean", Description: d} }
 	fields := func(extra map[string]ochazuke.Parameter) map[string]ochazuke.Parameter {
@@ -85,11 +85,11 @@ func (a *App) registerVerbs() {
 	set("machine.ssh", "{machine, argv, command}", map[string]ochazuke.Parameter{"name": name, "command": str("a command to run instead of a login shell")})
 	set("machine.df", "row[]", map[string]ochazuke.Parameter{"machines": machines, "all": all})
 	set("machine.status", "row[]", map[string]ochazuke.Parameter{"machines": machines})
-	set("machine.check", "result[]", map[string]ochazuke.Parameter{"check": required(check), "machines": machines, "all": all})
-	set("machine.state", "JSON Lines of rows", nil)
-	set("check.list", "row[]", nil)
-	set("check.show", "{check, script}", map[string]ochazuke.Parameter{"check": check})
-	set("check.run", "result[]", map[string]ochazuke.Parameter{"check": required(check), "machines": machines, "all": all})
+	set("machine.run", "result[]", map[string]ochazuke.Parameter{"check": required(check), "machines": machines, "all": all})
+	set("machine.lists", "JSON Lines of rows", nil)
+	set("probe.list", "row[]", nil)
+	set("probe.show", "{check, script}", map[string]ochazuke.Parameter{"check": check})
+	set("probe.run", "result[]", map[string]ochazuke.Parameter{"check": required(check), "machines": machines, "all": all})
 }
 
 func boolArg(args ochazuke.Arguments, name string) bool {
@@ -493,7 +493,7 @@ func (a *App) checkShow(c ochazuke.Ctx) ochazuke.Result {
 	if err != nil {
 		return ochazuke.Failed(err)
 	}
-	name := strings.TrimPrefix(ochazuke.StringArg(c.Args, "check", ""), "check/")
+	name := strings.TrimPrefix(ochazuke.StringArg(c.Args, "check", ""), "probe/")
 	if name == "" && c.Instance != nil {
 		if ch, ok := c.Instance.Data.(Check); ok {
 			name = ch.Name

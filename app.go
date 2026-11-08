@@ -32,7 +32,7 @@ type App struct {
 	r *ochazuke.Runtime
 	m *ochazuke.Model
 
-	machines, mounts *ochazuke.List
+	machines, mounts *ochazuke.Collection
 
 	run Runner
 	ssh *sshRunner
@@ -66,7 +66,7 @@ func New() (*App, error) {
 	ssh := newSSHRunner()
 	a := &App{r: r, run: ssh, ssh: ssh, status: map[string]Status{}, disks: map[string][]Mount{},
 		Stdin: os.Stdin, Stdout: os.Stdout, Stderr: os.Stderr}
-	r.Instance(pageID, ochazuke.Kind("fleet"))
+	r.Instance(pageID, ochazuke.Kind("fleet-page"))
 	var err error
 	if a.machines, err = r.AddList(machinesID, nil, ochazuke.Parent(pageID), ochazuke.Columns(columns["machine"]...), ochazuke.NoMarks()); err != nil {
 		return nil, err
@@ -78,7 +78,7 @@ func New() (*App, error) {
 		r.Define(noun).Columns(cols...)
 	}
 	r.Define("machine").Props(machineProps()...).Store(a.machineStore())
-	r.Define("check").Props(checkProps()...).Store(a.checkStore())
+	r.Define("probe").Props(checkProps()...).Store(a.checkStore())
 	a.registerVerbs()
 	a.m = ochazuke.NewModel(r)
 	a.m.Title = "o-fleet"
@@ -102,7 +102,7 @@ func (a *App) Shell() *ocli.Shell {
 	sh := ocli.New(a.r, "o-fleet", a.Stdin, a.Stdout, a.Stderr)
 	sh.Usage = ocli.DefaultUsage("o-fleet")
 	sh.Version = Version
-	sh.Owners = map[string]string{"machine": machinesID, "check": machinesID, "mount": mountsID, "peer": machinesID}
+	sh.Owners = map[string]string{"machine": machinesID, "probe": machinesID, "mount": mountsID, "peer": machinesID}
 	return sh
 }
 

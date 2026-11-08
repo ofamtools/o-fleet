@@ -38,7 +38,7 @@ o fleet status                           # up, uptime, load, memory, main disk, 
 o fleet ping                             # tailscale ping (or --via ssh)
 o fleet ssh backup                       # a shell on backup (o fleet machine ssh backup prints the command)
 o fleet ssh backup uptime                # or one command on it
-o fleet check run uname backup,web       # any check on any machines
+o fleet probe run uname backup,web       # any check on any machines
 o fleet                                  # the Fleet page (TUI)
 ```
 
@@ -46,8 +46,8 @@ The machine names above are examples; use your own.
 
 ## Nouns and verbs
 
-- `machine`: `list`, `show`, `add` (create), `set` (the standard set: `machine set NAME disk=/ notes="..."`; `name=NEW` or `@label=NEW` renames; the ssh field is `destination`), `remove` (confirm; delete), `get`, `edit`, `discover`, `ping`, `ssh`, `df`, `status`, `check CHECK [MACHINES]`, `state`.
-- `check`: `list`, `show` (prints the script it sends), `run CHECK [MACHINES]` (the same handler as `machine check`).
+- `machine`: `list`, `show`, `add` (create), `set` (the standard set: `machine set NAME disk=/ notes="..."`; `name=NEW` or `@label=NEW` renames; the ssh field is `destination`), `remove` (confirm; delete), `get`, `edit`, `discover`, `ping`, `ssh`, `df`, `status`, `run CHECK [MACHINES]`, `lists`.
+- `probe` (a check row): `list`, `show` (prints the script it sends), `run CHECK [MACHINES]` (the same handler as `machine run`).
 - `df`, `status`, `ping` at the top level are the machine verbs printed as tables: bare words are machine names; `--json` or `--format markdown|toon` picks another output.
 
 Every `NOUN VERB` prints JSON by default and takes `--format table|markdown|toon`. A machine that does not answer is a row with an `error`, never a failed command.
@@ -66,7 +66,7 @@ A check is a row: `name`, a POSIX sh `script` (or `scripts` keyed by a `uname -s
 {"checks": [{"name": "zpool", "script": "zpool list -H -o name,size,free,health", "parser": "lines"}]}
 ```
 
-To change a default, copy its row from `o fleet check show NAME` (or [checks.json](checks.json)) into your file and edit it. For example, to hide a mount of your own from `df` and `status`, give your `df` row the default `hide` lists plus your pattern under `mount` (say `"/mnt/scratch*"`). `o fleet check list` shows each row's `source`.
+To change a default, copy its row from `o fleet probe show NAME` (or [checks.json](checks.json)) into your file and edit it. For example, to hide a mount of your own from `df` and `status`, give your `df` row the default `hide` lists plus your pattern under `mount` (say `"/mnt/scratch*"`). `o fleet check list` shows each row's `source`.
 
 To pin the mount `status` reports for one machine rather than the largest: `o fleet machine set backup disk=/srv`.
 

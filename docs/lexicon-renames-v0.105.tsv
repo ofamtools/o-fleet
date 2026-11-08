@@ -1,0 +1,8 @@
+kind	old	new	note
+noun	fleet.check	fleet.probe	check is an action of ochazuke's own verbs (binding.check, setup.check); checks.json and the Check type keep their names
+operation	fleet.machine.check	fleet.machine.run	the mirror of probe.run; run is a verb
+operation	fleet.check.list|show|run	fleet.probe.list|show|run	
+operation	fleet.machine.state	fleet.machine.lists	the state source is the lists verb
+row-id	check/NAME	probe/NAME	
+page-kind	fleet	fleet-page	the namespace word fleet is not a noun
+binding-context	fleet/normal	fleet-page/normal	bindings.json

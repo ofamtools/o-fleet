@@ -1,7 +1,7 @@
 // o-fleet's default key rows (ochazuke bindings, JSONC). A user's bindings.json overrides them; o-fleet bindings list prints the effective rows.
 {
   "bindings": [
-    {"context": "fleet/normal", "bindings": {
+    {"context": "fleet-page/normal", "bindings": {
       "R": {"action": "machine.status", "args": {"machines": "*"}, "hint": "status all"},
       "q": {"action": "app.quit", "hint": "quit"}
     }},

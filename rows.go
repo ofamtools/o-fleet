@@ -14,7 +14,7 @@ import (
 //
 //	machine/NAME          a registered machine
 //	mount/NAME:PATH       one df row of a machine
-//	check/NAME            a check row
+//	probe/NAME            a check row
 //	peer/NAME             a tailnet machine (discover)
 
 var columns = map[string][]ochazuke.Column{
@@ -28,7 +28,7 @@ var columns = map[string][]ochazuke.Column{
 		{Title: "used", Align: ochazuke.AlignRight, Priority: 2}, {Title: "size", Align: ochazuke.AlignRight, Priority: 1},
 		{Title: "use%", Align: ochazuke.AlignRight, Priority: 1}, {Title: "filesystem", Priority: 3},
 	},
-	"check": {
+	"probe": {
 		{Title: "check", Min: 6}, {Title: "parser", Priority: 1}, {Title: "source", Priority: 3}, {Title: "description", Priority: 2},
 	},
 	"peer": {
@@ -88,7 +88,7 @@ func checkItem(c Check) ochazuke.ListItem {
 	if source != "default" {
 		source = tilde(source)
 	}
-	return ochazuke.ListItem{ID: "check/" + c.Name, Label: c.Name, Noun: "check", Data: c,
+	return ochazuke.ListItem{ID: "probe/" + c.Name, Label: c.Name, Noun: "probe", Data: c,
 		Cells: []string{c.Name, c.Parser, source, c.Description}}
 }
 

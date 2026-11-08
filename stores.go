@@ -92,7 +92,7 @@ func applyThing(m *Machine, t ochazuke.Thing) {
 
 func (a *App) machineStore() ochazuke.Store {
 	return ochazuke.Store{
-		Kind: ochazuke.Collection,
+		Kind: ochazuke.KindCollection,
 		Get: func(_ ochazuke.Ctx, id string) (ochazuke.Thing, error) {
 			f, err := loadFleet()
 			if err != nil {
@@ -190,13 +190,13 @@ func checkProps() []ochazuke.PropSpec {
 }
 
 func (a *App) checkStore() ochazuke.Store {
-	return ochazuke.Store{Kind: ochazuke.Collection, Facts: true,
+	return ochazuke.Store{Kind: ochazuke.KindCollection, Facts: true,
 		Get: func(_ ochazuke.Ctx, name string) (ochazuke.Thing, error) {
 			checks, err := loadChecks()
 			if err != nil {
 				return nil, err
 			}
-			ch, err := findCheck(checks, strings.TrimPrefix(name, "check/"))
+			ch, err := findCheck(checks, strings.TrimPrefix(name, "probe/"))
 			if err != nil {
 				return nil, err
 			}

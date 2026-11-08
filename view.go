@@ -40,7 +40,7 @@ func (a *App) render(r *ochazuke.Runtime, width, height int) ochazuke.Block {
 	if bh < 8 || width < 20 {
 		return ochazuke.Text(status)
 	}
-	panel := func(title string, list *ochazuke.List, w, h int) ochazuke.Block {
+	panel := func(title string, list *ochazuke.Collection, w, h int) ochazuke.Block {
 		cw, ch := ochazuke.PanelContentSize(w, h)
 		return l.PanelBlock(title, ochazuke.Text(list.View(cw, ch)), w, h, list.Focused())
 	}
@@ -103,7 +103,7 @@ func (a *App) statusLine() string {
 		parts = append(parts, fmt.Sprintf("%d up, %d down", up, down))
 	}
 	for _, j := range a.r.Jobs() {
-		if j.State == ochazuke.JobRunning {
+		if j.Status == ochazuke.JobRunning {
 			parts = append(parts, "asking…")
 			break
 		}
