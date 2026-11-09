@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Changed: requires ochazuke v0.110.1 (esc only leaves insert in modals and `q` closes them; label-first pickers).
+
 ## v0.2.0 (2026-11-08)
 
 - Changed, breaking (lexicon, ochazuke v0.105.0, one shot, no aliases; every rename is in `docs/lexicon-renames-v0.105.tsv`): the `check` noun is `probe` (`o fleet probe list|show|run`; a check row, `checks.json` and the `Check` type keep their names) because ochazuke's own verbs are named `check`; `machine check` is `machine run` (a probe on machines, the mirror of `probe run`); `machine state` is `machine lists`; the page kind `fleet` is `fleet-page` (binding context `fleet-page/normal`); `machine` is the main noun. `TestLexicon` runs with an empty baseline.
