@@ -32,11 +32,11 @@ o fleet machine discover --apply --only backup,web
 o fleet machine add backup --ssh backup --tailscale backup.example.ts.net --tags storage
 o fleet machine add web --tailscale web.example.ts.net --user deploy
 o fleet machine add desk --local
-o fleet df backup                        # free/used/total per mount, as a table
-o fleet df --json                        # every machine, JSON rows
+o fleet df backup --format table         # free/used/total per mount
+o fleet df --json                        # every machine, JSON rows (the default)
 o fleet status                           # up, uptime, load, memory, main disk, every machine at once
 o fleet ping                             # tailscale ping (or --via ssh)
-o fleet ssh backup                       # a shell on backup (o fleet machine ssh backup prints the command)
+o fleet ssh backup                       # a shell on backup (--print answers the command line instead)
 o fleet ssh backup uptime                # or one command on it
 o fleet probe run uname backup,web       # any check on any machines
 o fleet                                  # the Fleet page (TUI)

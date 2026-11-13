@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"os/exec"
 	"slices"
 	"strings"
 	"time"
@@ -30,7 +31,7 @@ func (a *App) registerVerbs() {
 		Verb("remove", a.machineRemove, "forget a machine (the registry only; nothing remote changes)").Destructive().Confirm("Remove machine {{name}}?").Positional("name").
 		Verb("discover", a.machineDiscover, "the tailnet's machines (tailscale status --json), each marked registered or new with its ~/.ssh/config alias; --apply registers the new ones (--only NAMES picks them)").Rows("peer").
 		Verb("ping", a.machinePing, "reach each machine: tailscale ping when it has a tailnet name, else ssh true (--via ssh|tailscale), with a timeout: rows {machine, via, ok, ms, detail, error}").Fetch().Quiet().Positional("machines").
-		Verb("ssh", a.machineSSH, "the ssh command line for a machine, {machine, argv, command} (o-fleet ssh NAME runs it)").Fetch().Quiet().Positional("name").
+		Verb("ssh", a.machineSSH, "open a shell (or run COMMAND) on a machine over ssh, on the terminal the caller gives it (a pane in mtm, the terminal on the command line); --print answers {machine, argv, command} instead and runs nothing").Foreground().Agent(ochazuke.AgentConfirm).Fetch().Quiet().Positional("name", "command").
 		Verb("df", a.machineDF, "disk space per mount on each machine (the df check): rows {noun: mount, data: {machine, mount, filesystem, size, used, avail, use_pct, error}, cells}; --all keeps pseudo and system mounts").Rows("mount").Fetch().Quiet().Positional("machines").
 		Verb("status", a.machineStatus, "up, uptime, load, memory and the main disk of each machine (the status and df checks, in parallel): machine rows with data.status").Rows("machine").Fetch().Quiet().Positional("machines").
 		Verb("run", a.runChecks, "run a check on machines: results {machine, check, ok, error, value, ms} (the same as probe run CHECK MACHINES, from the machine side)").Fetch().Quiet().Positional("check", "machines").
@@ -82,7 +83,11 @@ func (a *App) registerVerbs() {
 		"only":  str("with --apply, only these peer names, comma-separated"),
 	})
 	set("machine.ping", "row[]", map[string]ochazuke.Parameter{"machines": machines, "via": {Type: "string", Enum: []string{"tailscale", "ssh"}, Description: "how to reach it (default: tailscale when the machine has a tailnet name)"}, "timeout": str("a Go duration (default 5s)")})
-	set("machine.ssh", "{machine, argv, command}", map[string]ochazuke.Parameter{"name": name, "command": str("a command to run instead of a login shell")})
+	set("machine.ssh", "{machine, argv, command} with --print, else the session's exit", map[string]ochazuke.Parameter{
+		"name":    name,
+		"command": {Type: "string", Rest: true, Description: "a command to run instead of a login shell (the rest of the line)"},
+		"print":   boolean("answer the command line {machine, argv, command} and run nothing"),
+	})
 	set("machine.df", "row[]", map[string]ochazuke.Parameter{"machines": machines, "all": all})
 	set("machine.status", "row[]", map[string]ochazuke.Parameter{"machines": machines})
 	set("machine.run", "result[]", map[string]ochazuke.Parameter{"check": required(check), "machines": machines, "all": all})
@@ -385,6 +390,9 @@ func (a *App) machineSSH(c ochazuke.Ctx) ochazuke.Result {
 		command = []string{cmd}
 	}
 	argv := a.ssh.interactiveArgv(m, command)
+	if !boolArg(c.Args, "print") {
+		return ochazuke.Foreground(exec.Command(argv[0], argv[1:]...))
+	}
 	quoted := make([]string, len(argv))
 	for i, w := range argv {
 		quoted[i] = w

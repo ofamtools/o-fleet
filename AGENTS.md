@@ -20,7 +20,7 @@ o-fleet ships no knowledge of any one fleet. Machine names, users, tailnet domai
 | App, runtime, lists, follow | `app.go` |
 | The page | `view.go` |
 | tui, --smoke, the model | `tui.go` |
-| main, oden, the df/status/ping shortcuts, ssh exec | `main.go` |
+| main, oden, the view command | `main.go` |
 | Default keys | `bindings.json` |
 
 ## Invariants

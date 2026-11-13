@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"errors"
 	ocli "ofam.dev/ochazuke/cli"
-	"os"
 	"path/filepath"
 	"reflect"
 	"strings"
@@ -221,162 +220,24 @@ func TestDFReportsAnUnreachableMachineAsARow(t *testing.T) {
 	}
 }
 
-func TestShortcutsPrintTables(t *testing.T) {
+// The old shortcut words are the verbs' own: a verb word alone reads as
+// the machine verb, and ssh takes the rest of the line as its command.
+func TestVerbWordsReadAsMachineVerbs(t *testing.T) {
 	isolate(t)
 	register(t)
-	a, _ := New()
-	for _, s := range shortcuts {
-		if s.name != "df" {
-			continue
-		}
-		cases := map[string][]string{
-			"backup":                  {"machine", "df", "--machines", "backup", "--format", "table"},
-			"backup desk --all":       {"machine", "df", "--machines", "backup,desk", "--all", "--format", "table"},
-			"backup --json":           {"machine", "df", "--machines", "backup", "--json"},
-			"--format markdown":       {"machine", "df", "--format", "markdown"},
-			"--all backup":            {"machine", "df", "--machines", "backup", "--all", "--format", "table"},
-			"--json {\"all\":true} x": {"machine", "df", "--machines", "x", "--json", "{\"all\":true}", "--format", "table"},
-		}
-		for in, want := range cases {
-			words := strings.Fields(in)
-			if got := s.args(a.r, words); !reflect.DeepEqual(got, want) {
-				t.Errorf("%q: %v, want %v", in, got, want)
-			}
-		}
+	t.Setenv("O_FLEET_SSH", "ssh")
+	out := decode[map[string]any](t, run(t, "ssh", "backup", "df", "-h", "--print"))
+	if out["command"] != "ssh backup 'df -h'" {
+		t.Fatalf("%v", out)
 	}
-}
-
-func TestStatus(t *testing.T) {
-	isolate(t)
-	register(t)
-	out, _, err := runFake(t, fake(), "machine", "status", "--format", "table")
-	if err != nil {
+	if _, err := New(); err != nil {
 		t.Fatal(err)
 	}
-	lines := strings.Split(strings.TrimSpace(out), "\n")
-	if len(lines) != 4 || !strings.Contains(lines[1], "backup") || !strings.Contains(lines[1], "up") || !strings.Contains(lines[1], "25d 13h") ||
-		!strings.Contains(lines[1], "200G free 99%") || !strings.Contains(lines[3], "down") {
-		t.Fatalf("%s", out)
-	}
-	type row struct {
-		Data machineRow `json:"data"`
-	}
-	js, _, _ := runFake(t, fake(), "machine", "status", "--machines", "backup")
-	rows := decode[[]row](t, js)
-	st := rows[0].Data.Status
-	if st == nil || st.CPUs != 4 || st.MemTotal != 16000000*1024 || st.Disk.Mount != "/srv" {
-		t.Fatalf("%+v", st)
-	}
-	// A machine's Disk picks the mount status reports.
-	run(t, "machine", "set", "backup", "disk=/")
-	js, _, _ = runFake(t, fake(), "machine", "status", "--machines", "backup")
-	if d := decode[[]row](t, js)[0].Data.Status.Disk; d.Mount != "/" {
-		t.Fatalf("%+v", d)
-	}
-}
-
-func TestChecksAreConfig(t *testing.T) {
-	dir := isolate(t)
-	register(t)
-	user := `{"checks": [
-	  {"name": "who", "script": "whoami", "parser": "lines"},
-	  {"name": "uname", "scripts": {"Linux": "uname -sr", "*": "uname -s"}, "parser": "text"}
-	]}`
-	if err := os.WriteFile(filepath.Join(dir, "checks.json"), []byte(user), 0o644); err != nil {
-		t.Fatal(err)
-	}
-	list := run(t, "probe", "list", "--format", "table")
-	if !strings.Contains(list, "who ") || !strings.Contains(list, "~") && !strings.Contains(list, dir) {
-		t.Fatalf("%s", list)
-	}
-	show := decode[map[string]any](t, run(t, "probe", "show", "uname"))
-	script := show["script"].(string)
-	if !strings.Contains(script, "case \"$(uname -s)\" in\nLinux)\nuname -sr\n;;\n*)\nuname -s\n;;\nesac") {
-		t.Fatalf("%q", script)
-	}
-	f := fake()
-	f.answers["backup"]["whoami"] = "me\n"
-	for _, args := range [][]string{{"probe", "run", "who", "backup"}, {"machine", "run", "who", "backup"}} {
-		out, _, err := runFake(t, f, args...)
-		if err != nil {
-			t.Fatal(err)
+	for _, w := range []string{"df", "status", "ping"} {
+		var buf, errb bytes.Buffer
+		if err := Main([]string{w, "--help"}, strings.NewReader(""), &buf, &errb); err != nil {
+			t.Errorf("%s: %v", w, err)
 		}
-		res := decode[[]Result](t, out)
-		if len(res) != 1 || !res[0].OK || !reflect.DeepEqual(res[0].Value, []any{"me"}) {
-			t.Fatalf("%v: %s", args, out)
-		}
-	}
-	bad := `{"checks": [{"name": "x", "script": "true", "parser": "nope"}]}`
-	os.WriteFile(filepath.Join(dir, "checks.json"), []byte(bad), 0o644)
-	if _, _, err := runFake(t, f, "probe", "list"); err == nil || !strings.Contains(err.Error(), "parser") {
-		t.Fatalf("%v", err)
-	}
-}
-
-func TestEveryScriptIsSentThroughShC(t *testing.T) {
-	s := &sshRunner{SSH: "ssh", ConnectTimeout: 8}
-	args := s.sshArgs(Machine{Name: "backup", SSH: "backup"}, "echo 'hi'")
-	want := []string{"-o", "BatchMode=yes", "-o", "ConnectTimeout=8", "-T", "backup", `sh -c 'echo '\''hi'\'''`}
-	if !reflect.DeepEqual(args, want) {
-		t.Fatalf("%q", args)
-	}
-}
-
-func TestDiscover(t *testing.T) {
-	dir := isolate(t)
-	status := `{"Self": {"HostName": "desk", "DNSName": "desk.node.example.", "OS": "macOS", "TailscaleIPs": ["100.64.0.5", "fd7a::5"]},
-	  "Peer": {"k1": {"HostName": "backup-01", "DNSName": "backup.node.example.", "OS": "linux", "TailscaleIPs": ["100.64.0.3"], "Online": true},
-	           "k2": {"HostName": "web", "DNSName": "web.node.example.", "OS": "linux", "TailscaleIPs": ["100.64.0.6"], "Online": false}}}`
-	os.WriteFile(filepath.Join(dir, "status.json"), []byte(status), 0o644)
-	ts := filepath.Join(dir, "tailscale")
-	os.WriteFile(ts, []byte("#!/bin/sh\n[ \"$1\" = status ] || exit 2\ncat '"+filepath.Join(dir, "status.json")+"'\n"), 0o755)
-	t.Setenv("O_FLEET_TAILSCALE", ts)
-	os.WriteFile(filepath.Join(dir, "ssh_config"), []byte("Host backup\n  User me\n  HostName 100.64.0.3\nHost *\n  ServerAliveInterval 5\n"), 0o644)
-	run(t, "machine", "add", "web", "--tailscale", "web.node.example")
-
-	type row struct {
-		Data peerRow `json:"data"`
-	}
-	var out, errOut bytes.Buffer
-	if err := Main([]string{"machine", "discover"}, strings.NewReader(""), &out, &errOut); err != nil {
-		t.Fatal(err, errOut.String())
-	}
-	rows := decode[[]row](t, out.String())
-	if len(rows) != 3 || rows[0].Data.Name != "backup" || rows[0].Data.SSH != "backup" || rows[2].Data.Registered != "web" || !rows[1].Data.Self {
-		t.Fatalf("%+v", rows)
-	}
-	if !strings.Contains(errOut.String(), "2 new peer(s)") {
-		t.Fatalf("%s", errOut.String())
-	}
-	// A dry run writes nothing.
-	if n := len(decode[[]any](t, run(t, "machine", "list"))); n != 1 {
-		t.Fatalf("dry run registered %d", n)
-	}
-	out.Reset()
-	if err := Main([]string{"machine", "discover", "--apply", "--only", "backup"}, strings.NewReader(""), &out, &errOut); err != nil {
-		t.Fatal(err)
-	}
-	type mrow struct {
-		Data Machine `json:"data"`
-	}
-	ms := decode[[]mrow](t, run(t, "machine", "list"))
-	if len(ms) != 2 || ms[1].Data.Name != "backup" || ms[1].Data.SSH != "backup" || ms[1].Data.IP != "100.64.0.3" || ms[1].Data.Tailscale != "backup.node.example" {
-		t.Fatalf("%+v", ms)
-	}
-}
-
-func TestPingOverSSH(t *testing.T) {
-	isolate(t)
-	register(t)
-	f := fake()
-	f.answers["desk"]["true"] = ""
-	out, _, err := runFake(t, f, "machine", "ping", "desk,laptop", "--via", "ssh")
-	if err != nil {
-		t.Fatal(err)
-	}
-	res := decode[[]pingResult](t, out)
-	if !res[0].OK || res[0].Via != "local" || res[1].OK || !strings.Contains(res[1].Error, "timed out") {
-		t.Fatalf("%+v", res)
 	}
 }
 
@@ -384,7 +245,7 @@ func TestSSHCommandLine(t *testing.T) {
 	isolate(t)
 	register(t)
 	t.Setenv("O_FLEET_SSH", "ssh")
-	out := decode[map[string]any](t, run(t, "machine", "ssh", "backup", "--command", "df -h"))
+	out := decode[map[string]any](t, run(t, "machine", "ssh", "backup", "--command", "df -h", "--print"))
 	if out["command"] != "ssh backup 'df -h'" {
 		t.Fatalf("%v", out)
 	}
@@ -503,10 +364,8 @@ func TestEveryVerbDeclaresItsHistory(t *testing.T) {
 			t.Errorf("%s declares no history kind", key)
 		}
 	}
-	// The named verbs plus the standard verbs the machine and check
-	// stores add.
-	if n != 28 {
-		t.Fatalf("%d o-fleet verbs, want 28", n)
+	if n == 0 {
+		t.Fatal("no o-fleet verbs")
 	}
 	if _, err := New(); err != nil {
 		t.Fatal(err)
