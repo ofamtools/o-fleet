@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## v0.4.0
 
 - Changed: requires ochazuke v0.133.0 and oden v0.5.1. The lexicon word list is merged with ochazuke's; the verb-count assertion is gone (the standard noun scaffold verbs, show, duplicate, history, yank, archive, watch, grow with the library). The machine noun already had the scaffold (dynamic list, show, edit, set, duplicate, delete; archive is unavailable: no archive prop). A direct run from a pane records its pane and session through the library's `MTM_*` actor reading; o-fleet reads no environment of its own.
 - Changed, breaking (parity, one shot): the top-level CLI commands `df`, `status`, `ping` and `ssh` are gone as separate commands; they were the verbs `machine df|status|ping|ssh` under shorter words, so mtm, the palette and MCP could not reach them as such. The words still work (`o fleet df`, `o fleet status`, `o fleet ping`, `o fleet ssh NAME [COMMAND...]` read as the machine verbs), but a bare `df`, `status` or `ping` now prints JSON like every verb; add `--format table` for the table the shortcuts used to default to.
