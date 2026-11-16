@@ -27,7 +27,7 @@ func TestRules(t *testing.T) {
 		Places:  places,
 		Off: map[string]string{
 			"names":    "TestNoNewNameBranches holds it",
-			"refusals": "TestNoNewRefusals holds it",
+			"refusals": "no refusecheck baseline here; not part of this check",
 			"lexicon":  "TestLexicon holds it",
 			"nouns":    "TestNouns holds it",
 		},
