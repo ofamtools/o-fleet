@@ -82,7 +82,7 @@ func (a *App) registerVerbs() {
 		"apply": boolean("register the new peers (default: a dry run that writes nothing)"),
 		"only":  str("with --apply, only these peer names, comma-separated"),
 	})
-	set("machine.ping", "row[]", map[string]ochazuke.Parameter{"machines": machines, "via": {Type: "string", Enum: []string{"tailscale", "ssh"}, Description: "how to reach it (default: tailscale when the machine has a tailnet name)"}, "timeout": str("a Go duration (default 5s)")})
+	set("machine.ping", "row[]", map[string]ochazuke.Parameter{"machines": machines, "via": {Type: "string", Enum: pingWays, Description: "how to reach it (default: tailscale when the machine has a tailnet name)"}, "timeout": str("a Go duration (default 5s)")})
 	set("machine.ssh", "{machine, argv, command} with --print, else the session's exit", map[string]ochazuke.Parameter{
 		"name":    name,
 		"command": {Type: "string", Rest: true, Description: "a command to run instead of a login shell (the rest of the line)"},
@@ -334,12 +334,21 @@ func (a *App) machineDiscover(c ochazuke.Ctx) ochazuke.Result {
 	})
 }
 
+// pingWays are the ways machine.ping reaches a machine.
+var pingWays = []string{"tailscale", "ssh"}
+
 func (a *App) machinePing(c ochazuke.Ctx) ochazuke.Result {
 	ms, err := a.machinesArg(c)
 	if err != nil {
 		return ochazuke.Failed(err)
 	}
 	via := ochazuke.StringArg(c.Args, "via", "")
+	if via != "" && !slices.Contains(pingWays, via) {
+		// Not a way this verb knows: nothing is probed, and the status
+		// line names the ways there are.
+		c.Info(fmt.Sprintf("no %q way to ping: the ways are %s; nothing probed", via, strings.Join(pingWays, " and ")))
+		return ochazuke.Done([]pingResult{})
+	}
 	timeout, err := time.ParseDuration(ochazuke.StringArg(c.Args, "timeout", "5s"))
 	if err != nil {
 		return ochazuke.Failed(&ochazuke.ArgumentError{Err: fmt.Errorf("--timeout: %w", err)})

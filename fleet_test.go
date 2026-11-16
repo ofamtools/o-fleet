@@ -220,6 +220,34 @@ func TestDFReportsAnUnreachableMachineAsARow(t *testing.T) {
 	}
 }
 
+// A way to reach a machine that ping does not know probes nothing (it
+// used to run the ssh probe) and says so, with no error.
+func TestPingUnknownViaProbesNothing(t *testing.T) {
+	isolate(t)
+	register(t)
+	a, err := New()
+	if err != nil {
+		t.Fatal(err)
+	}
+	f := fake()
+	a.run = f
+	sink := &ochazuke.RecordingSink{}
+	a.r.UI().Attach(sink)
+	if _, err := a.r.Execute(ochazuke.Request{Noun: "machine", Verb: "ping", Args: ochazuke.Arguments{"machines": "backup", "via": "bogus"}}); err != nil {
+		t.Fatal(err)
+	}
+	if err := a.Settle(); err != nil {
+		t.Fatal(err)
+	}
+	if len(f.sent) != 0 {
+		t.Fatalf("via=bogus probed: %q", f.sent)
+	}
+	if e, info := sink.LastError(), sink.LastInfo(); e != "" || !strings.Contains(info, "tailscale and ssh") {
+		t.Fatalf("error %q info %q", e, info)
+	}
+}
+
+// The old shortcut words are the verbs' own: a verb word alone reads as
 // The old shortcut words are the verbs' own: a verb word alone reads as
 // the machine verb, and ssh takes the rest of the line as its command.
 func TestVerbWordsReadAsMachineVerbs(t *testing.T) {
