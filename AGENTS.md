@@ -22,6 +22,7 @@ o-fleet ships no knowledge of any one fleet. Machine names, users, tailnet domai
 | tui, --smoke, the model | `tui.go` |
 | main, oden, the view command | `main.go` |
 | Default keys | `bindings.json` |
+| More hidden default rows (the run-3 key picker), loaded after it | `bindings_picker.json`, `bindings_default.go` |
 
 ## Invariants
 

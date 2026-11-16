@@ -85,6 +85,9 @@ func New() (*App, error) {
 	if err := r.LoadDefaultBindingsFS(bindingsFS, "bindings.json"); err != nil {
 		return nil, err
 	}
+	if err := loadPickerBindings(r); err != nil {
+		return nil, err
+	}
 	if err := ocli.DeclarePage(r, dataPage()); err != nil {
 		return nil, err
 	}

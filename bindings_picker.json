@@ -1,0 +1,16 @@
+// o-fleet's hidden default rows from the run-3 key picker (ochazuke bindings, JSONC). A user's bindings.json overrides them.
+{
+  "bindings": [
+    {"context": "machine/normal", "bindings": [
+      {"key": "O", "action": "machine.add", "hidden": true},
+      {"key": "d a", "action": "machine.archive", "hidden": true},
+      {"key": "b", "action": "machine.discover", "hidden": true},
+      {"key": "M", "action": "machine.get", "hidden": true},
+      {"key": "U", "action": "machine.history", "hidden": true},
+      {"key": "m", "action": "machine.list", "hidden": true},
+      {"key": "c", "action": "machine.lists", "hidden": true},
+      {"key": "*", "action": "machine.set", "hidden": true},
+      {"key": "w", "action": "machine.watch", "hidden": true}
+    ]}
+  ]
+}
